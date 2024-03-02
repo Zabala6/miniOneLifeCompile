@@ -29,7 +29,7 @@ LINK="../OneLifeData7"
 ../miniOneLifeCompile/util/createSymLinks.sh $PLATFORM "$FOLDERS" $TARGET $LINK
 
 
-cp -rn ../OneLife/server/settings .
+cp -Rf ../OneLife/gameSource/settings ./settings
 
 cp ../OneLife/server/firstNames.txt .
 cp ../OneLife/server/lastNames.txt .

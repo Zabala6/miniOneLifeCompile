@@ -33,7 +33,7 @@ TARGET="."
 LINK="../OneLife/gameSource"
 ../miniOneLifeCompile/util/createSymLinks.sh $PLATFORM "$FOLDERS" $TARGET $LINK
 
-cp -rn ../OneLife/gameSource/settings .
+cp -Rf ../OneLife/gameSource/settings ./settings
 cp ../OneLife/gameSource/us_english_60.txt .
 
 cp ../OneLife/gameSource/reverbImpulseResponse.aiff .
