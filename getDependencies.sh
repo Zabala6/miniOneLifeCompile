@@ -7,7 +7,7 @@ if [[ "$1" = "arch" ]]; then
 	sudo pacman -S --noconfirm \
 		rsync wget unzip git \
 		imagemagick xclip mesa \
-		lib32-sdl_image mingw-w64
+		lib32-sdl_image mingw-w64 base-devel
 elif [[ "$1" = "fedora" ]]; then
 	sudo yum update
 	sudo yum install -y \
