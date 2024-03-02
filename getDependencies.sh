@@ -8,6 +8,16 @@ if [[ "$1" = "arch" ]]; then
 		rsync wget unzip git \
 		imagemagick xclip mesa \
 		lib32-sdl_image mingw-w64
+elif [[ "$1" = "fedora" ]]; then
+	sudo yum update
+	sudo yum install -y \
+		rsync wget unzip git \
+		ImageMagick xclip \
+		mesa-libGLU-devel \
+		mesa-libGL-devel \
+		mingw32-gcc-c++ "SDL_*"
+	sudo yum group install -y \
+		"C Development Tools and Libraries"
 else
 	sudo apt-get update
 
