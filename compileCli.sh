@@ -1,15 +1,15 @@
 #!/bin/bash
 cd "$(dirname "${0}")/.."
-COMPILE_ROOT=$(pwd)
-OUTPUT=$COMPILE_ROOT/output
-ONE_LIFE=$COMPILE_ROOT/OneLife
-ONE_LIFE_DATA=$COMPILE_ROOT/OneLifeData7
-ONE_LIFE_SERVER=$ONE_LIFE/server
-GAME_SOURSE=$ONE_LIFE/gameSource
-MINI_ONE_LIFE_COMPILE=$COMPILE_ROOT/miniOneLifeCompile
+compile_root=$(pwd)
+output=$compile_root/output
+one_life=$compile_root/OneLife
+one_life_data=$compile_root/OneLifeData7
+one_life_server=$one_life/server
+game_source=$one_life/gameSource
+mini_one_life_compile=$compile_root/miniOneLifeCompile
 
-DISCORD_SDK_PATH="$COMPILE_ROOT/dependencies/discord_game_sdk"
-MINOR_GEMS_PATH="$COMPILE_ROOT/minorGems"
+discord_sdk_path="$compile_root/dependencies/discord_game_sdk"
+minor_gems_path="$compile_root/minorGems"
 
 Help(){
     echo "---------------------------------------"
@@ -44,9 +44,9 @@ get_options(){
                 Help
                 exit;;
             c) 
-                export COMPILE=$OPTARG;;
+                export compile=$OPTARG;;
             p)
-                export PLATFORM=$OPTARG;;
+                export platform=$OPTARG;;
             \?)
                 echo "Error: Invalid option"
                 exit;;
@@ -55,33 +55,33 @@ get_options(){
 }
 
 check_input(){
-    if [ -z "$COMPILE" ]; then
+    if [ -z "$compile" ]; then
         echo "Error: Compile option wasn't satisfied"
         exit
-    elif ! [ "$COMPILE" -ge 1 ] || ! [ "$COMPILE" -le 7 ];then
+    elif ! [ "$compile" -ge 1 ] || ! [ "$compile" -le 7 ];then
         echo "Error: Compile option is beyond valid range 1 to 7"
         exit
     fi
 
-    if [ -z "$PLATFORM" ]; then
-        PLATFORM=1
+    if [ -z "$platform" ]; then
+        platform=1
         echo "Warning: Platform option wasn't satisfied. It was set to 1(Linux)."
-    elif ! [ "$PLATFORM" -eq 1 ] && ! [ "$PLATFORM" -eq 5 ]; then
+    elif ! [ "$platform" -eq 1 ] && ! [ "$platform" -eq 5 ]; then
         echo "Error: Platform option is valid only for 1 and 5"
         exit
     fi
 }
 
 compiler_switch(){
-    if (( ($COMPILE & 1) != 0 )); then
+    if (( ($compile & 1) != 0 )); then
         echo "Compiling client ..."
         compile_client
     fi
-    if (( ($COMPILE & 2) != 0 )); then
+    if (( ($compile & 2) != 0 )); then
         echo "Compiling server ..."
         compile_server
     fi
-    if (( ($COMPILE & 4) != 0 )); then
+    if (( ($compile & 4) != 0 )); then
         echo "Compiling editor ..."
         compile_editor
     fi
@@ -97,7 +97,7 @@ compile_client(){
     
     cp_sdl_win
     cp_clearCache_win
-    cp $ONE_LIFE/{gameSource/reverbImpulseResponse.aiff,server/wordList.txt} $OUTPUT
+    cp $one_life/{gameSource/reverbImpulseResponse.aiff,server/wordList.txt} $output
     cp_game_version_number
     cp_discord_sdk
     cp_game
@@ -111,7 +111,7 @@ compile_server(){
     make_server_symLinks
     make_game_settings
 
-    cp $ONE_LIFE_SERVER/{firstNames.txt,lastNames.txt,wordList.txt} $OUTPUT
+    cp $one_life_server/{firstNames.txt,lastNames.txt,wordList.txt} $output
     cp_game_version_number
     cp_server
 }
@@ -124,21 +124,21 @@ compile_editor(){
     make_editor_symLinks
     make_game_settings
 
-    cp $GAME_SOURSE/{us_english_60.txt,reverbImpulseResponse.aiff} $OUTPUT
+    cp $game_source/{us_english_60.txt,reverbImpulseResponse.aiff} $output
     cp_game_version_number
     cp_sdl_win
     cp_editor
 }
 
 make_output_dir(){
-    if ! [ -d $OUTPUT ];then
-        mkdir $OUTPUT
+    if ! [ -d $output ];then
+        mkdir $output
     fi
 }
 
 make_game_settings(){
-    if ! [ -d "$OUTPUT/settings" ];then
-        cp -r $GAME_SOURSE/settings $OUTPUT/settings
+    if ! [ -d "$output/settings" ];then
+        cp -r $game_source/settings $output/settings
     fi
 }
 
@@ -148,11 +148,11 @@ make_client_symLinks(){
 }
 
 make_server_symLinks(){
-    if ! [ -d $OUTPUT/tutorialMaps ];then
-        TARGET="$OUTPUT"
+    if ! [ -d $output/tutorialMaps ];then
+        TARGET="$output"
         FOLDERS="objects transitions categories tutorialMaps"
-        LINK="$ONE_LIFE_DATA"
-        $MINI_ONE_LIFE_COMPILE/util/createSymLinks.sh $PLATFORM "$FOLDERS" $TARGET $LINK
+        LINK="$one_life_data"
+        $mini_one_life_compile/util/createSymLinks.sh $platform "$FOLDERS" $TARGET $LINK
     fi
 }
 
@@ -162,31 +162,31 @@ make_editor_symLinks(){
 }
 
 make_main_data_symLinks(){
-    if ! [ -d $OUTPUT/animations ];then
-        TARGET="$OUTPUT"
+    if ! [ -d $output/animations ];then
+        TARGET="$output"
         FOLDERS="animations categories ground music objects sounds sprites transitions"
-        LINK="$ONE_LIFE_DATA"
-        $MINI_ONE_LIFE_COMPILE/util/createSymLinks.sh $PLATFORM "$FOLDERS" $TARGET $LINK
+        LINK="$one_life_data"
+        $mini_one_life_compile/util/createSymLinks.sh $platform "$FOLDERS" $TARGET $LINK
     fi
 }
 
 make_secondary_data_symLinks(){
-    if ! [ -d $OUTPUT/graphics ];then
-        TARGET="$OUTPUT"
+    if ! [ -d $output/graphics ];then
+        TARGET="$output"
         FOLDERS="graphics otherSounds languages"
-        LINK="$GAME_SOURSE"
-        $MINI_ONE_LIFE_COMPILE/util/createSymLinks.sh $PLATFORM "$FOLDERS" $TARGET $LINK
+        LINK="$game_source"
+        $mini_one_life_compile/util/createSymLinks.sh $platform "$FOLDERS" $TARGET $LINK
     fi
 }
 
 
 make_client(){
-    cd $GAME_SOURSE
+    cd $game_source
     make
 }
 
 make_server(){
-    cd $ONE_LIFE_SERVER
+    cd $one_life_server
     make
 }
 
@@ -196,68 +196,68 @@ make_editor(){
 }
 
 configure_client(){
-    cd $ONE_LIFE
-    if [ -d $DISCORD_SDK_PATH ]; then
-        ./configure $PLATFORM "$MINOR_GEMS_PATH" --discord_sdk_path "${DISCORD_SDK_PATH}"
+    cd $one_life
+    if [ -d $discord_sdk_path ]; then
+        ./configure $platform "$minor_gems_path" --discord_sdk_path "${discord_sdk_path}"
     else
-        ./configure $PLATFORM
+        ./configure $platform
     fi
-    if [[ $PLATFORM == 5 ]]; then export PATH="/usr/i686-w64-mingw32/bin:${PATH}"; fi
+    if [[ $platform == 5 ]]; then export PATH="/usr/i686-w64-mingw32/bin:${PATH}"; fi
 }
 
 configure_server(){
-    cd $ONE_LIFE_SERVER
-    ./configure $PLATFORM
+    cd $one_life_server
+    ./configure $platform
 }
 configure_editor(){
-    cd $ONE_LIFE
-    ./configure $PLATFORM
-    if [[ $PLATFORM == 5 ]]; then export PATH="/usr/i686-w64-mingw32/bin:${PATH}"; fi
+    cd $one_life
+    ./configure $platform
+    if [[ $platform == 5 ]]; then export PATH="/usr/i686-w64-mingw32/bin:${PATH}"; fi
 }
 
 cp_game(){
-    if [[ $PLATFORM == 5 ]]; then
+    if [[ $platform == 5 ]]; then
         rm -f OneLife.exe
-        cp $GAME_SOURSE/OneLife.exe $OUTPUT
+        cp $game_source/OneLife.exe $output
         #rm ../OneLife/gameSource/OneLife.exe # this causes it to wait ~15s without any reason!
     fi
-    if [[ $PLATFORM == 1 ]]; then
-        mv -f $GAME_SOURSE/OneLife $OUTPUT
+    if [[ $platform == 1 ]]; then
+        mv -f $game_source/OneLife $output
     fi
 }
 
 cp_server(){
-    if [[ $PLATFORM == 5 ]]; then mv $ONE_LIFE_SERVER/OneLifeServer.exe $OUTPUT; fi
-    if [[ $PLATFORM == 1 ]]; then mv $ONE_LIFE_SERVER/OneLifeServer $OUTPUT; fi
+    if [[ $platform == 5 ]]; then mv $one_life_server/OneLifeServer.exe $output; fi
+    if [[ $platform == 1 ]]; then mv $one_life_server/OneLifeServer $output; fi
 }
 
 cp_editor(){
-    if [[ $PLATFORM == 5 ]]; then cp -f $GAME_SOURSE/EditOneLife.exe $OUTPUT; fi
-    if [[ $PLATFORM == 1 ]]; then cp -f $GAME_SOURSE/EditOneLife $OUTPUT; fi
+    if [[ $platform == 5 ]]; then cp -f $game_source/EditOneLife.exe $output; fi
+    if [[ $platform == 1 ]]; then cp -f $game_source/EditOneLife $output; fi
 }
 
 cp_game_version_number(){
-    if [ -f $OUTPUT/dataVersionNumber.txt ];then
-        rm $OUTPUT/dataVersionNumber.txt
+    if [ -f $output/dataVersionNumber.txt ];then
+        rm $output/dataVersionNumber.txt
     fi
-    cp $ONE_LIFE_DATA/dataVersionNumber.txt $OUTPUT
+    cp $one_life_data/dataVersionNumber.txt $output
 }
 
 cp_sdl_win(){
-    if [[ $PLATFORM == 5 ]] && [ ! -f SDL.dll ]; then cp $ONE_LIFE/build/win32/SDL.dll $OUTPUT; fi
+    if [[ $platform == 5 ]] && [ ! -f SDL.dll ]; then cp $one_life/build/win32/SDL.dll $output; fi
 }
 
 cp_clearCache_win(){
-    if [[ $PLATFORM == 5 ]] && [ ! -f clearCache.bat ]; then cp $ONE_LIFE/build/win32/clearCache.bat $OUTPUT; fi
+    if [[ $platform == 5 ]] && [ ! -f clearCache.bat ]; then cp $one_life/build/win32/clearCache.bat $output; fi
 }
 
 cp_discord_sdk(){
-    if [ -d $DISCORD_SDK_PATH ]; then
-        if [[ $PLATFORM == 5 ]]; then cp $DISCORD_SDK_PATH/lib/x86/discord_game_sdk.dll $OUTPUT; fi
-        if [[ $PLATFORM == 1 ]]; then
-            if [[ ! -f $OUTPUT/discord_game_sdk.so ]]; then
-                sudo cp $DISCORD_SDK_PATH/lib/x86_64/discord_game_sdk.so $OUTPUT
-                sudo chmod a+r $OUTPUT/discord_game_sdk.so
+    if [ -d $discord_sdk_path ]; then
+        if [[ $platform == 5 ]]; then cp $discord_sdk_path/lib/x86/discord_game_sdk.dll $output; fi
+        if [[ $platform == 1 ]]; then
+            if [[ ! -f $output/discord_game_sdk.so ]]; then
+                sudo cp $discord_sdk_path/lib/x86_64/discord_game_sdk.so $output
+                sudo chmod a+r $output/discord_game_sdk.so
             fi
         fi
     fi
