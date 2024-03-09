@@ -90,19 +90,16 @@ compiler_switch(){
 compile_here(){
     test "$client" == "yes" && configure_client && echo "Debug: Making client." && cd $game_source && make
     test "$server" == "yes" && configure_server && echo "Debug: Making server." && cd $one_life_server && make
-    test "$editor" == "yes" && configure_editor && echo "Debug: Making editor." && cd $game_source && ./makeEditor.sh
+    test "$editor" == "yes" && configure_client && echo "Debug: Making editor." && cd $game_source && ./makeEditor.sh
 
     make_output_dir
 
-    if [ "$client" == "yes"  -o  "$editor" == "yes" ];then
-        make_main_data_sym_links
-    fi
-
+    test "$client" == "yes"  -o  "$editor" == "yes" && make_main_data_sym_links
     test "$server" == "yes" && make_server_sym_links
+    make_secondary_data_sym_links
 
     make_game_settings
     cp_game_version_number
-
     copy_here
 }
 
@@ -119,9 +116,9 @@ make_game_settings(){
 }
 
 make_server_sym_links(){
-    if ! [ -d $output/objects ];then
+    if ! [ -d $output/tutorialMaps ];then
         target="$output"
-        folders="objects transitions categories tutorialMaps"
+        folders="tutorialMaps"
         link="$one_life_data"
         $mini_one_life_compile/util/createSymLinks.sh $platform "$folders" $target $link
     fi
@@ -130,7 +127,7 @@ make_server_sym_links(){
 make_main_data_sym_links(){
     if ! [ -d $output/animations ];then
         target="$output"
-        folders="animations categories ground music objects sounds sprites transitions"
+        folders="animations ground music sounds sprites"
         link="$one_life_data"
         $mini_one_life_compile/util/createSymLinks.sh $platform "$folders" $target $link
     fi
@@ -138,6 +135,17 @@ make_main_data_sym_links(){
         target="$output"
         folders="graphics otherSounds languages"
         link="$game_source"
+        $mini_one_life_compile/util/createSymLinks.sh $platform "$folders" $target $link
+    fi
+}
+
+make_secondary_data_sym_links(){
+    target="$output"
+    link="$one_life_data"
+    if ! [ -d $output/objects ];then
+        target="$output"
+        folders="objects transitions categories"
+        link="$one_life_data"
         $mini_one_life_compile/util/createSymLinks.sh $platform "$folders" $target $link
     fi
 }
@@ -158,17 +166,10 @@ configure_server(){
     cd $one_life_server
     ./configure $platform
 }
-configure_editor(){
-    echo "Debug: Configuring editor. $platform,     $one_life"
-    cd $one_life
-    ./configure $platform
-    test "$platform" -eq 5 && export PATH="/usr/i686-w64-mingw32/bin:${PATH}"
-}
 
 copy_here(){
     if [ "$client" == "yes" ];then
         cp $one_life/{gameSource/reverbImpulseResponse.aiff,server/wordList.txt} $output
-	    cp_discord_sdk
 	    cp_clearCache_win
         test "$platform" -eq 5 && mv -vf $game_source/OneLife.exe $output
         test "$platform" -eq 1 && mv -vf $game_source/OneLife $output
@@ -182,7 +183,8 @@ copy_here(){
     	cp $game_source/{us_english_60.txt,reverbImpulseResponse.aiff} $output
         test "$platform" -eq 5 && mv -vf $game_source/EditOneLife.exe $output
         test "$platform" -eq 1 && mv -vf $game_source/EditOneLife $output
-    fi 
+    fi
+    test "$client" == "yes" -o "$editor" == "yes" && cp_discord_sdk
 }
 
 cp_game_version_number(){
