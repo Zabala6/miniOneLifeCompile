@@ -15,9 +15,9 @@ elif [[ "$1" = "fedora" ]]; then
 		ImageMagick xclip \
 		mesa-libGLU-devel \
 		mesa-libGL-devel \
-		mingw32-gcc-c++ "SDL_*"
-	sudo yum group install -y \
-		"C Development Tools and Libraries"
+		mingw32-gcc-c++ \
+		libpng-devel SDL-devel \
+		gcc-c++ make
 else
 	sudo apt-get update
 
