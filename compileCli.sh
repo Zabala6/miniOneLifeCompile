@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+# set -e
 cd "$(dirname "${0}")/.."
 compile_root=$(pwd)
 output=$compile_root/output
@@ -86,12 +86,11 @@ compiler_switch(){
 
     compile_here
 }
-}
 
 compile_here(){
-    test "$client" == "yes" && configure_client && cd $game_source && make
-    test "$server" == "yes" && configure_server && cd $one_life_server && make
-    test "$editor" == "yes" && configure_editor && cd $game_source && ./makeEditor.sh
+    test "$client" == "yes" && configure_client && echo "Debug: Making client." && cd $game_source && make
+    test "$server" == "yes" && configure_server && echo "Debug: Making server." && cd $one_life_server && make
+    test "$editor" == "yes" && configure_editor && echo "Debug: Making editor." && cd $game_source && ./makeEditor.sh
 
     make_output_dir
 
@@ -120,7 +119,7 @@ make_game_settings(){
 }
 
 make_server_sym_links(){
-    if ! [ -d $output/tutorialMaps ];then
+    if ! [ -d $output/objects ];then
         target="$output"
         folders="objects transitions categories tutorialMaps"
         link="$one_life_data"
@@ -144,6 +143,7 @@ make_main_data_sym_links(){
 }
 
 configure_client(){
+    echo "Debug: Configuring Client."
     cd $one_life
     if [ -d $discord_sdk_path ]; then
         ./configure $platform "$minor_gems_path" --discord_sdk_path "$discord_sdk_path"
@@ -154,10 +154,12 @@ configure_client(){
 }
 
 configure_server(){
+    echo "Debug: Configuring server."
     cd $one_life_server
     ./configure $platform
 }
 configure_editor(){
+    echo "Debug: Configuring editor. $platform,     $one_life"
     cd $one_life
     ./configure $platform
     test "$platform" -eq 5 && export PATH="/usr/i686-w64-mingw32/bin:${PATH}"
@@ -168,20 +170,23 @@ copy_here(){
         cp $one_life/{gameSource/reverbImpulseResponse.aiff,server/wordList.txt} $output
 	    cp_discord_sdk
 	    cp_clearCache_win
-        test "$platform" -eq 5 && cp -vf $game_source/OneLife.exe $output
-        test "$platform" -eq 1 && cp -vf $game_source/OneLife $output
-    elif [ "$server" == "yes" ];then
+        test "$platform" -eq 5 && mv -vf $game_source/OneLife.exe $output
+        test "$platform" -eq 1 && mv -vf $game_source/OneLife $output
+    fi
+    if [ "$server" == "yes" ];then
     	cp $one_life_server/{firstNames.txt,lastNames.txt,wordList.txt} $output
-        test "$platform" -eq 5 && cp -vf $one_life_server/OneLifeServer.exe $output
-        test "$platform" -eq 1 && cp -vf $one_life_server/OneLifeServer $output
-    elif [ "$editor" == "yes" ];then
+        test "$platform" -eq 5 && mv -vf $one_life_server/OneLifeServer.exe $output
+        test "$platform" -eq 1 && mv -vf $one_life_server/OneLifeServer $output
+    fi
+    if [ "$editor" == "yes" ];then
     	cp $game_source/{us_english_60.txt,reverbImpulseResponse.aiff} $output
-        test "$platform" -eq 5 && cp -vf $game_source/EditOneLife.exe $output
-        test "$platform" -eq 1 && cp -vf $game_source/EditOneLife $output
+        test "$platform" -eq 5 && mv -vf $game_source/EditOneLife.exe $output
+        test "$platform" -eq 1 && mv -vf $game_source/EditOneLife $output
     fi 
 }
 
 cp_game_version_number(){
+    echo "Debug: Copping dataVersionNumber file."
     cp -vf $one_life_data/dataVersionNumber.txt $output
 }
 
@@ -194,10 +199,13 @@ cp_clearCache_win(){
 }
 
 cp_discord_sdk(){
+    echo "Debug: Copping discord sdk."
     if [ -d $discord_sdk_path ]; then
         test $platform -eq 5 && cp $discord_sdk_path/lib/x86/discord_game_sdk.dll $output
         if [ $platform -eq 1 ] && ! [ -f "$output/discord_game_sdk.so" ] ; then
-                cp $discord_sdk_path/lib/x86_64/discord_game_sdk.so $output
+            # sudo cp $discord_sdk_path/lib/x86_64/discord_game_sdk.so $output
+            # sudo chmod a+r $output/discord_game_sdk.so
+            cp $discord_sdk_path/lib/x86_64/discord_game_sdk.so $output
         fi
     fi
 }
