@@ -2,7 +2,10 @@
 # set -e
 cd "$(dirname "${0}")/.."
 compile_root=$(pwd)
-output=$compile_root/output
+
+# Defines what will be the name of the output folder.
+output=$compile_root/output_5
+
 one_life=$compile_root/OneLife
 one_life_data=$compile_root/OneLifeData7
 one_life_server=$one_life/server
@@ -49,26 +52,29 @@ get_options(){
             p)
                 export platform=$OPTARG;;
             \?)
-                echo "Error: Invalid option"
+                echo "ERROR Invalid option"
+                Help
                 exit;;
         esac
     done
 }
 
+# Checks input from the user if options are correctly entered.
 check_input(){
     if [ -z "$compile" ]; then
-        echo "Error: Compile option wasn't satisfied"
+        echo "ERROR Compile option wasn't satisfied"
+        Help
         exit
     elif [ "$compile" -lt 1 ] || [ "$compile" -gt 7 ];then
-        echo "Error: Compile option is beyond valid range 1 to 7"
+        echo "ERROR Compile option is beyond valid range 1 to 7"
         exit
     fi
 
     if [ -z "$platform" ]; then
         platform=1
-        echo "Warning: Platform option wasn't given. Defaulting to 1 (Linux)."
+        echo "WARNING Platform option wasn't given. Defaulting to 1 (Linux)."
     elif [ "$platform" -ne 1 ] && [ "$platform" -ne 5 ]; then
-        echo "Error: Platform option is valid only for 1 and 5"
+        echo "ERROR Platform option is valid only for 1 and 5"
         exit
     fi
 }
@@ -88,89 +94,89 @@ compiler_switch(){
 }
 
 compile_here(){
-    test "$client" == "yes" && configure_client && echo "Debug: Making client." && cd $game_source && make
-    test "$server" == "yes" && configure_server && echo "Debug: Making server." && cd $one_life_server && make
-    test "$editor" == "yes" && configure_client && echo "Debug: Making editor." && cd $game_source && ./makeEditor.sh
+    configure_here
+    test "$client" == "yes" && echo "DEBUG Making client." && cd $game_source && make
+    test "$server" == "yes" && echo "DEBUG Making server." && cd $one_life_server && make
+    test "$editor" == "yes" && echo "DEBUG Making editor." && cd $game_source && ./makeEditor.sh
 
     make_output_dir
-
-    test "$client" == "yes"  -o  "$editor" == "yes" && make_main_data_sym_links
-    test "$server" == "yes" && make_server_sym_links
-    make_secondary_data_sym_links
-
-    make_game_settings
-    cp_game_version_number
-    copy_here
+    make_sym_links
+    copy_mv_here
 }
 
 make_output_dir(){
     if ! [ -d $output ];then
+        echo "DEBUG Creating output directory."
         mkdir $output
     fi
 }
 
-make_game_settings(){
+cp_game_settings(){
     if ! [ -d "$output/settings" ];then
         cp -vr $game_source/settings $output/settings
     fi
 }
 
-make_server_sym_links(){
-    if ! [ -d $output/tutorialMaps ];then
-        target="$output"
-        folders="tutorialMaps"
-        link="$one_life_data"
-        $mini_one_life_compile/util/createSymLinks.sh $platform "$folders" $target $link
-    fi
-}
-
-make_main_data_sym_links(){
-    if ! [ -d $output/animations ];then
-        target="$output"
-        folders="animations ground music sounds sprites"
-        link="$one_life_data"
-        $mini_one_life_compile/util/createSymLinks.sh $platform "$folders" $target $link
-    fi
-    if ! [ -d $output/graphics ];then
-        target="$output"
-        folders="graphics otherSounds languages"
-        link="$game_source"
-        $mini_one_life_compile/util/createSymLinks.sh $platform "$folders" $target $link
-    fi
-}
-
-make_secondary_data_sym_links(){
+make_sym_links(){
     target="$output"
-    link="$one_life_data"
-    if ! [ -d $output/objects ];then
-        target="$output"
-        folders="objects transitions categories"
+
+    if [[ "$client" == "yes"  ||  "$editor" == "yes" ]];then
+        
+        if ! [ -d $output/animations ];then
+            echo "DEBUG Making media symLinks."
+            link="$one_life_data"
+            folders="animations ground music sounds sprites"
+            $mini_one_life_compile/util/createSymLinks.sh $platform "$folders" $target $link
+        fi
+        if ! [ -d $output/graphics ];then
+            echo "DEBUG Making main media symLinks."
+            link="$game_source"
+            folders="graphics otherSounds languages"
+            $mini_one_life_compile/util/createSymLinks.sh $platform "$folders" $target $link
+        fi
+    fi
+    if [[ "$server" == "yes" && ! -d "$output/tutorialMaps" ]];then
+        echo "DEBUG Making tutorialMaps symLinks."
         link="$one_life_data"
+        folders="tutorialMaps"
+        $mini_one_life_compile/util/createSymLinks.sh $platform "$folders" $target $link
+    fi
+    if ! [ -d "$output/objects" ];then
+        echo "DEBUG Making definition symLinks."
+        link="$one_life_data"
+        folders="objects transitions categories"
         $mini_one_life_compile/util/createSymLinks.sh $platform "$folders" $target $link
     fi
 }
 
-configure_client(){
-    echo "Debug: Configuring Client."
-    cd $one_life
-    if [ -d $discord_sdk_path ]; then
-        ./configure $platform "$minor_gems_path" --discord_sdk_path "$discord_sdk_path"
-    else
+# Configures make file for specific platforms.
+configure_here(){
+    if [[ "$client" == "yes" || "$editor" == "yes" ]];then
+        echo "DEBUG Configuring make file for client and editor."
+        cd $one_life
+        if [ -d $discord_sdk_path ];then
+            ./configure $platform "$minor_gems_path" --discord_sdk_path "$discord_sdk_path"
+        else
+            ./configure $platform
+        fi
+        if [[ $platform -eq 5 ]]; then export PATH="/usr/i686-w64-mingw32/bin:${PATH}"; fi
+    fi
+    if [ "$server" == "yes" ];then
+        echo "DEBUG Configuring make file for server."
+        cd $one_life_server
         ./configure $platform
     fi
-    if [[ $platform -eq 5 ]]; then export PATH="/usr/i686-w64-mingw32/bin:${PATH}"; fi
 }
 
-configure_server(){
-    echo "Debug: Configuring server."
-    cd $one_life_server
-    ./configure $platform
-}
-
-copy_here(){
+# Copies essential files and moves executable files to output folder.
+copy_mv_here(){
+    cp_discord_sdk
+    cp_game_settings
+    cp_game_version_number
     if [ "$client" == "yes" ];then
+        cp_clearCache_win
+        cp_sdl_win
         cp $one_life/{gameSource/reverbImpulseResponse.aiff,server/wordList.txt} $output
-	    cp_clearCache_win
         test "$platform" -eq 5 && mv -vf $game_source/OneLife.exe $output
         test "$platform" -eq 1 && mv -vf $game_source/OneLife $output
     fi
@@ -180,15 +186,16 @@ copy_here(){
         test "$platform" -eq 1 && mv -vf $one_life_server/OneLifeServer $output
     fi
     if [ "$editor" == "yes" ];then
+        cp_sdl_win
     	cp $game_source/{us_english_60.txt,reverbImpulseResponse.aiff} $output
         test "$platform" -eq 5 && mv -vf $game_source/EditOneLife.exe $output
         test "$platform" -eq 1 && mv -vf $game_source/EditOneLife $output
     fi
-    test "$client" == "yes" -o "$editor" == "yes" && cp_discord_sdk
+    
 }
 
 cp_game_version_number(){
-    echo "Debug: Copping dataVersionNumber file."
+    echo "DEBUG Copping dataVersionNumber file."
     cp -vf $one_life_data/dataVersionNumber.txt $output
 }
 
@@ -201,7 +208,7 @@ cp_clearCache_win(){
 }
 
 cp_discord_sdk(){
-    echo "Debug: Copping discord sdk."
+    echo "DEBUG Copping discord sdk."
     if [ -d $discord_sdk_path ]; then
         test $platform -eq 5 && cp $discord_sdk_path/lib/x86/discord_game_sdk.dll $output
         if [ $platform -eq 1 ] && ! [ -f "$output/discord_game_sdk.so" ] ; then
