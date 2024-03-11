@@ -4,7 +4,7 @@ cd "$(dirname "${0}")/.."
 compile_root=$(pwd)
 
 # Defines what will be the name of the output folder.
-output=$compile_root/output_5
+output=$compile_root/output
 
 one_life=$compile_root/OneLife
 one_life_data=$compile_root/OneLifeData7
